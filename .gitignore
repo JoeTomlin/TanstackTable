@@ -1,15 +1,14 @@
 # Dependencies
 node_modules/
-package-lock.json
-
-# Cloudflare Workers
-.wrangler/
-.dev.vars
 
 # Build outputs
 dist/
 build/
 *.tsbuildinfo
+
+# Cloudflare Workers
+.wrangler/
+.dev.vars
 
 # Environment & secrets
 .env
@@ -35,4 +34,7 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+
+# Vite
+*.local
 
