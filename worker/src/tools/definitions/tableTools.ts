@@ -458,46 +458,4 @@ export const tableTools: ToolDefinition[] = [
       required: ['pageNumber']
     }
   }
-];```
-
-## Key Features for Contracts Domain:
-
-### 1. **Multi-Column Search**
-`searchTable` searches across both `contractName` and `clientName`
-
-### 2. **Advanced Filtering**
-- `filterMultipleColumns` for complex queries like "active contracts over $100k for Acme"
-- `between` operator for date/value ranges
-
-### 3. **Calculations** (8 calculation tools):
-- `calculateTotalValue` - Sum of contract values
-- `calculateAverageValue` - Mean contract value
-- `calculateContractDuration` - Days between start/end
-- `calculateMonthlyValue` - Amortized monthly value
-- `getExpiringContracts` - Contracts ending soon
-- `groupByClient` - Aggregate by client
-- `groupByStatus` - Aggregate by status
-
-### 4. **Business Logic**
-- Status tracking (active, pending, expired, cancelled)
-- Date-based operations
-- Client-centric views
-
-## Example Queries This Handles:
-```
-User: "Show me all active contracts worth more than $100,000"
-→ filterMultipleColumns: [{column: "status", operator: "equals", value: "active"}, {column: "value", operator: "greaterThan", value: 100000}]
-
-User: "What's the total value of contracts expiring in the next 60 days?"
-→ getExpiringContracts: {daysAhead: 60}
-→ calculateTotalValue: {filters: [from previous result]}
-
-User: "Find all Microsoft contracts and sort by value"
-→ searchTable: {query: "Microsoft"}
-→ sortTable: {column: "value", direction: "desc"}
-
-User: "Which client has the most contract value?"
-→ groupByClient: {sortBy: "totalValue", sortDirection: "desc"}
-
-User: "Add a new contract for Tesla worth $500,000 from Jan 1 to Dec 31 2025"
-→ addContract: {contractName: "Tesla Agreement", clientName: "Tesla", value: 500000, startDate: "2025-01-01", endDate: "2025-12-31", status: "pending"}
+];
