@@ -191,9 +191,8 @@ export const tableTools: ToolDefinition[] = [
   
   {
     name: 'updateContract',
-    description: `Update an existing contract's information.
-    Example: "change the value of contract abc123 to 300000"
-    Example: "update the status of Acme contract to active"`,
+    description: `Update an existing contract by ID.
+    Example: "change the value of contract abc123 to 300000"`,
     parameters: {
       type: 'object',
       properties: {
@@ -222,8 +221,40 @@ export const tableTools: ToolDefinition[] = [
   },
   
   {
+    name: 'updateContractByName',
+    description: `Update a contract by searching for its name. Use this when user asks to update a contract by name.
+    Example: "change the status of Network Contract to active"
+    Example: "update the Microsoft contract value to 600000"`,
+    parameters: {
+      type: 'object',
+      properties: {
+        contractName: {
+          type: 'string',
+          description: 'The name (or partial name) of the contract to update'
+        },
+        updates: {
+          type: 'object',
+          description: 'Fields to update',
+          properties: {
+            contractName: { type: 'string' },
+            clientName: { type: 'string' },
+            value: { type: 'number' },
+            startDate: { type: 'string', description: 'YYYY-MM-DD format' },
+            endDate: { type: 'string', description: 'YYYY-MM-DD format' },
+            status: { 
+              type: 'string', 
+              enum: ['active', 'pending', 'expired', 'cancelled']
+            }
+          }
+        }
+      },
+      required: ['contractName', 'updates']
+    }
+  },
+  
+  {
     name: 'deleteContract',
-    description: `Delete a contract by its ID.
+    description: `Delete a contract by its ID. Use when you have the contract ID.
     Example: "remove contract abc123"`,
     parameters: {
       type: 'object',
@@ -234,6 +265,23 @@ export const tableTools: ToolDefinition[] = [
         }
       },
       required: ['id']
+    }
+  },
+  
+  {
+    name: 'deleteContractByName',
+    description: `Delete a contract by searching for its name. Use this when user asks to delete a contract by name.
+    Example: "delete the Enterprise License contract"
+    Example: "remove the Microsoft contract"`,
+    parameters: {
+      type: 'object',
+      properties: {
+        contractName: {
+          type: 'string',
+          description: 'The name (or partial name) of the contract to delete'
+        }
+      },
+      required: ['contractName']
     }
   },
   

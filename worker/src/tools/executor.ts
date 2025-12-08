@@ -86,8 +86,14 @@ export async function executeToolCall(
       case 'updateContract':
         return await ops.updateContract(args.id, args.updates, env.DB);
       
+      case 'updateContractByName':
+        return await ops.updateContractByName(args.contractName, args.updates, env.DB);
+      
       case 'deleteContract':
         return await ops.deleteContract(args.id, env.DB);
+      
+      case 'deleteContractByName':
+        return await ops.deleteContractByName(args.contractName, env.DB);
       
       case 'deleteContracts':
         return await ops.deleteContracts(args.ids, env.DB);

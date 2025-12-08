@@ -153,14 +153,91 @@ export async function updateContract(id: string, updates: Partial<Contract>, db:
   }
 }
 
+export async function updateContractByName(contractName: string, updates: Partial<Contract>, db: D1Database): Promise<any> {
+  try {
+    // Find the contract first
+    const contract = await db.prepare(
+      'SELECT * FROM contracts WHERE contractName LIKE ? LIMIT 1'
+    ).bind(`%${contractName}%`).first();
+    
+    if (!contract) {
+      return { 
+        success: false, 
+        error: `No contract found matching "${contractName}"` 
+      };
+    }
+    
+    // Build dynamic UPDATE query
+    const fields = Object.keys(updates);
+    if (fields.length === 0) {
+      return { success: false, error: 'No updates provided' };
+    }
+    
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => (updates as any)[field]);
+    
+    await db.prepare(
+      `UPDATE contracts SET ${setClause} WHERE id = ?`
+    ).bind(...values, contract.id).run();
+    
+    // Fetch updated contract
+    const updated = await db.prepare('SELECT * FROM contracts WHERE id = ?').bind(contract.id).first();
+    
+    return {
+      success: true,
+      contract: addCalculations(updated as Contract),
+      message: `Updated contract: ${(updated as Contract).contractName}`
+    };
+  } catch (error: any) {
+    return { error: 'Failed to update contract', details: error.message };
+  }
+}
+
 export async function deleteContract(id: string, db: D1Database): Promise<any> {
   try {
     await db.prepare('DELETE FROM contracts WHERE id = ?').bind(id).run();
     
+    // Return remaining contracts so frontend can update
+    const remaining = await db.prepare('SELECT * FROM contracts ORDER BY createdAt DESC').all();
+    const contracts = (remaining.results as Contract[]).map(addCalculations);
+    
     return {
       success: true,
       id,
+      contracts,
       message: `Deleted contract ${id}`
+    };
+  } catch (error: any) {
+    return { error: 'Failed to delete contract', details: error.message };
+  }
+}
+
+export async function deleteContractByName(contractName: string, db: D1Database): Promise<any> {
+  try {
+    // Find the contract first
+    const contract = await db.prepare(
+      'SELECT * FROM contracts WHERE contractName LIKE ? LIMIT 1'
+    ).bind(`%${contractName}%`).first();
+    
+    if (!contract) {
+      return { 
+        success: false, 
+        error: `No contract found matching "${contractName}"` 
+      };
+    }
+    
+    // Delete it
+    await db.prepare('DELETE FROM contracts WHERE id = ?').bind(contract.id).run();
+    
+    // Return remaining contracts
+    const remaining = await db.prepare('SELECT * FROM contracts ORDER BY createdAt DESC').all();
+    const contracts = (remaining.results as Contract[]).map(addCalculations);
+    
+    return {
+      success: true,
+      deletedContract: addCalculations(contract as Contract),
+      contracts,
+      message: `Deleted contract: ${(contract as Contract).contractName}`
     };
   } catch (error: any) {
     return { error: 'Failed to delete contract', details: error.message };
