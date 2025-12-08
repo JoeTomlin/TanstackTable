@@ -1,0 +1,1 @@
+import type { Contract } from '../types/contracts';

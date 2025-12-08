@@ -1,3 +1,4 @@
+import type { Contract, ContractWithCalculations } from '../types/contracts';
 export async function executeToolCall(
     toolCall: ToolCall, 
     env: Env
