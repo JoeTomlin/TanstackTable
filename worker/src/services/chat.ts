@@ -2,6 +2,29 @@ import type { Message, ToolDefinition, ToolCall } from '../types/messages';
 import type { Env } from '../types/env';
 import { executeToolCall } from '../tools/executor';
 
+// System prompt to minimize hallucination
+const SYSTEM_PROMPT = `You are a contract management assistant. You help users manage their contracts database.
+
+IMPORTANT RULES:
+1. ONLY use the tools provided to interact with contracts. Never make up contract data.
+2. When asked about contracts, ALWAYS use getContracts or search tools first to get real data.
+3. If a tool returns an error or "not found", report that honestly - don't pretend it succeeded.
+4. For updates/deletes by name, use updateContractByName or deleteContractByName tools.
+5. Never claim an action was successful unless the tool result confirms success.
+6. If you're unsure about something, say so - don't guess.
+7. Keep responses concise and focused on the task.
+
+Available actions:
+- View contracts: getContracts, getContractById, searchTable, filterTable
+- Create: addContract (requires contractName, clientName, value, startDate, endDate, status)
+- Update: updateContractByName (provide contract name and fields to update)
+- Delete: deleteContractByName (provide contract name)
+- Calculations: calculateTotalValue, calculateAverageValue, groupByClient, groupByStatus
+- Table operations: sortTable, filterTable, filterMultipleColumns
+
+Status values: active, pending, expired, cancelled
+Date format: YYYY-MM-DD`;
+
 export async function chat(args: {
   messages: Message[];
   tools: ToolDefinition[];
@@ -19,8 +42,11 @@ export async function chat(args: {
     },
   }));
 
-  // Build conversation history
-  let conversationMessages = [...messages];
+  // Build conversation with system prompt
+  let conversationMessages: Message[] = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...messages
+  ];
   let maxIterations = 5; // Prevent infinite loops
   
   while (maxIterations > 0) {
