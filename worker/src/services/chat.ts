@@ -121,10 +121,11 @@ export async function chat(args: {
       });
     }
 
-    // If this was a data modification, include the result directly
+    // Check if any tool returned a successful result
     const lastResult = toolResults[toolResults.length - 1]?.result as Record<string, unknown>;
-    if (lastResult?.success && (lastResult?.contract || lastResult?.contracts)) {
-      // Return tool result with AI context
+    
+    if (lastResult?.success) {
+      // Get AI's natural language response
       const contextResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -137,22 +138,32 @@ export async function chat(args: {
         }),
       });
       
+      let aiMessage = lastResult.message as string || 'Done!';
       if (contextResponse.ok) {
         const contextCompletion = await contextResponse.json() as {
           choices: Array<{ message: { content: string } }>;
         };
-        
-        return new Response(JSON.stringify({
-          success: true,
-          message: contextCompletion.choices[0].message.content,
-          toolResults: toolResults.map(tr => tr.result),
-          // Include contracts data for frontend to update
-          ...(lastResult.contract ? { contract: lastResult.contract } : {}),
-          ...(lastResult.contracts ? { contracts: lastResult.contracts } : {})
-        }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        aiMessage = contextCompletion.choices[0].message.content;
       }
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: aiMessage,
+        toolResults: toolResults.map(tr => tr.result),
+        // Include data for frontend to update
+        ...(lastResult.contract ? { contract: lastResult.contract } : {}),
+        ...(lastResult.contracts ? { contracts: lastResult.contracts } : {}),
+        // Include table actions (filter, sort, search, pagination)
+        ...(lastResult.action ? { action: lastResult.action } : {}),
+        ...(lastResult.filter ? { filter: lastResult.filter } : {}),
+        ...(lastResult.sort ? { sort: lastResult.sort } : {}),
+        ...(lastResult.search ? { search: lastResult.search } : {}),
+        ...(lastResult.filters ? { filters: lastResult.filters } : {}),
+        ...(lastResult.pageSize ? { pageSize: lastResult.pageSize } : {}),
+        ...(lastResult.pageNumber ? { pageNumber: lastResult.pageNumber } : {}),
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
   }
 

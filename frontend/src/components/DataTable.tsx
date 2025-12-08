@@ -11,9 +11,52 @@ import type {
   SortingState,
   ColumnFiltersState,
   OnChangeFn,
+  FilterFn,
 } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Contract } from '../types';
+
+// Custom filter function to handle operator-based filtering
+const operatorFilter: FilterFn<Contract> = (row, columnId, filterValue) => {
+  // Handle simple string filter (for global filter or manual typing)
+  if (typeof filterValue === 'string') {
+    const cellValue = String(row.getValue(columnId) ?? '').toLowerCase();
+    return cellValue.includes(filterValue.toLowerCase());
+  }
+
+  // Handle operator-based filter from AI
+  if (typeof filterValue === 'object' && filterValue.operator) {
+    const { operator, value, value2 } = filterValue;
+    const cellValue = row.getValue(columnId);
+
+    switch (operator) {
+      case 'equals':
+        return String(cellValue).toLowerCase() === String(value).toLowerCase();
+      case 'notEquals':
+        return String(cellValue).toLowerCase() !== String(value).toLowerCase();
+      case 'contains':
+        return String(cellValue).toLowerCase().includes(String(value).toLowerCase());
+      case 'startsWith':
+        return String(cellValue).toLowerCase().startsWith(String(value).toLowerCase());
+      case 'endsWith':
+        return String(cellValue).toLowerCase().endsWith(String(value).toLowerCase());
+      case 'greaterThan':
+        return Number(cellValue) > Number(value);
+      case 'lessThan':
+        return Number(cellValue) < Number(value);
+      case 'greaterThanOrEqual':
+        return Number(cellValue) >= Number(value);
+      case 'lessThanOrEqual':
+        return Number(cellValue) <= Number(value);
+      case 'between':
+        return Number(cellValue) >= Number(value) && Number(cellValue) <= Number(value2);
+      default:
+        return true;
+    }
+  }
+
+  return true;
+};
 
 interface DataTableProps {
   data: Contract[];
@@ -54,6 +97,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'contractName',
     header: 'Contract Name',
+    filterFn: operatorFilter,
     cell: info => (
       <span style={{ fontWeight: 500, color: '#1f2937', fontSize: '0.9375rem' }}>{info.getValue() as string}</span>
     )
@@ -61,6 +105,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'clientName',
     header: 'Client',
+    filterFn: operatorFilter,
     cell: info => (
       <span style={{ color: '#4b5563', fontSize: '0.9375rem' }}>{info.getValue() as string}</span>
     )
@@ -68,6 +113,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'value',
     header: 'Value',
+    filterFn: operatorFilter,
     cell: info => {
       const value = info.getValue() as number;
       return (
@@ -80,6 +126,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'startDate',
     header: 'Start',
+    filterFn: operatorFilter,
     cell: info => (
       <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>{info.getValue() as string}</span>
     )
@@ -87,6 +134,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'endDate',
     header: 'End',
+    filterFn: operatorFilter,
     cell: info => (
       <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>{info.getValue() as string}</span>
     )
@@ -94,6 +142,7 @@ const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
+    filterFn: operatorFilter,
     cell: info => {
       const status = info.getValue() as string;
       const colors: Record<string, { bg: string; text: string }> = {

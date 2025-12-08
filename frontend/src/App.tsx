@@ -76,13 +76,20 @@ function App() {
       setGlobalFilter(result.search.query);
     }
 
-    if (result.action === 'setPageSize') {
-      setPageSize(result.message?.match(/\d+/)?.[0] ? parseInt(result.message.match(/\d+/)![0]) : 10);
+    if (result.action === 'setPageSize' && result.pageSize) {
+      setPageSize(result.pageSize);
     }
 
-    if (result.action === 'goToPage') {
-      const pageNum = result.message?.match(/\d+/)?.[0];
-      if (pageNum) setPageIndex(parseInt(pageNum) - 1);
+    if (result.action === 'goToPage' && result.pageNumber) {
+      setPageIndex(result.pageNumber - 1); // Convert to 0-indexed
+    }
+
+    if (result.action === 'filterMultiple' && result.filters) {
+      // Handle multiple filters
+      setColumnFilters(result.filters.map((f: { column: string; operator: string; value: unknown }) => ({
+        id: f.column,
+        value: { operator: f.operator, value: f.value }
+      })));
     }
 
     // Refresh data if contracts were modified

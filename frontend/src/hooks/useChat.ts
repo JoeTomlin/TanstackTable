@@ -45,11 +45,25 @@ export function useChat(onToolResult: (result: ToolResult) => void) {
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Handle tool results
+      // Handle tool results from the response
       if (data.toolResults && data.toolResults.length > 0) {
         for (const result of data.toolResults) {
           onToolResult(result);
         }
+      }
+
+      // Handle table actions (filter, sort, search, pagination)
+      if (data.action) {
+        onToolResult({
+          success: true,
+          action: data.action,
+          ...(data.filter ? { filter: data.filter } : {}),
+          ...(data.sort ? { sort: data.sort } : {}),
+          ...(data.search ? { search: data.search } : {}),
+          ...(data.filters ? { filters: data.filters } : {}),
+          ...(data.pageSize ? { pageSize: data.pageSize } : {}),
+          ...(data.pageNumber ? { pageNumber: data.pageNumber } : {}),
+        });
       }
 
       // If there's contract data, trigger a refresh
