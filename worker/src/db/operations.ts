@@ -100,6 +100,31 @@ export async function getContractById(id: string, includeCalculations: boolean, 
 
 export async function addContract(data: Omit<Contract, 'id'>, db: D1Database): Promise<any> {
   try {
+    // Validation
+    if (!data.contractName || !data.clientName) {
+      return { success: false, error: 'Contract name and client name are required' };
+    }
+    
+    if (data.value === undefined || data.value < 0) {
+      return { success: false, error: 'Value must be a non-negative number' };
+    }
+    
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(data.startDate) || !dateRegex.test(data.endDate)) {
+      return { success: false, error: 'Dates must be in YYYY-MM-DD format' };
+    }
+    
+    // Validate date range
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return { success: false, error: 'Invalid date values' };
+    }
+    if (endDate < startDate) {
+      return { success: false, error: 'End date must be after start date' };
+    }
+    
     const id = crypto.randomUUID();
     const contract: Contract = {
       id,
