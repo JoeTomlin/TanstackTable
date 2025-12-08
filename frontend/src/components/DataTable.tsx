@@ -12,6 +12,7 @@ import type {
   ColumnFiltersState,
   OnChangeFn,
 } from '@tanstack/react-table';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Contract } from '../types';
 
 interface DataTableProps {
@@ -28,45 +29,92 @@ interface DataTableProps {
   setPageIndex: (index: number) => void;
 }
 
+// Neumorphism styles
+const neumorph = {
+  inset: {
+    boxShadow: 'inset 4px 4px 8px #d4cfc6, inset -4px -4px 8px #ffffff',
+    borderRadius: '16px',
+    backgroundColor: '#e8e0d5',
+  },
+  button: {
+    boxShadow: '4px 4px 8px #d4cfc6, -4px -4px 8px #ffffff',
+    borderRadius: '12px',
+    backgroundColor: '#e8e0d5',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontFamily: "'Inter', system-ui, sans-serif",
+  },
+  buttonPressed: {
+    boxShadow: 'inset 2px 2px 4px #d4cfc6, inset -2px -2px 4px #ffffff',
+  }
+};
+
 const columns: ColumnDef<Contract>[] = [
   {
     accessorKey: 'contractName',
     header: 'Contract Name',
-    cell: info => <span className="font-medium">{info.getValue() as string}</span>
+    cell: info => (
+      <span style={{ fontWeight: 500, color: '#1f2937', fontSize: '0.9375rem' }}>{info.getValue() as string}</span>
+    )
   },
   {
     accessorKey: 'clientName',
-    header: 'Client Name',
+    header: 'Client',
+    cell: info => (
+      <span style={{ color: '#4b5563', fontSize: '0.9375rem' }}>{info.getValue() as string}</span>
+    )
   },
   {
     accessorKey: 'value',
     header: 'Value',
     cell: info => {
       const value = info.getValue() as number;
-      return `$${value.toLocaleString()}`;
+      return (
+        <span style={{ fontWeight: 600, color: '#7c3aed', fontSize: '0.9375rem' }}>
+          ${value.toLocaleString()}
+        </span>
+      );
     }
   },
   {
     accessorKey: 'startDate',
-    header: 'Start Date',
+    header: 'Start',
+    cell: info => (
+      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>{info.getValue() as string}</span>
+    )
   },
   {
     accessorKey: 'endDate',
-    header: 'End Date',
+    header: 'End',
+    cell: info => (
+      <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>{info.getValue() as string}</span>
+    )
   },
   {
     accessorKey: 'status',
     header: 'Status',
     cell: info => {
       const status = info.getValue() as string;
-      const colors = {
-        active: 'bg-green-100 text-green-800',
-        pending: 'bg-yellow-100 text-yellow-800',
-        expired: 'bg-gray-100 text-gray-800',
-        cancelled: 'bg-red-100 text-red-800'
+      const colors: Record<string, { bg: string; text: string }> = {
+        active: { bg: '#d1fae5', text: '#065f46' },
+        pending: { bg: '#fef3c7', text: '#92400e' },
+        expired: { bg: '#e5e7eb', text: '#4b5563' },
+        cancelled: { bg: '#fee2e2', text: '#991b1b' }
       };
+      const color = colors[status] || colors.expired;
       return (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${colors[status as keyof typeof colors]}`}>
+        <span style={{
+          display: 'inline-flex',
+          padding: '5px 14px',
+          borderRadius: '20px',
+          fontSize: '0.8125rem',
+          fontWeight: 500,
+          backgroundColor: color.bg,
+          color: color.text,
+          boxShadow: '2px 2px 4px #d4cfc6, -2px -2px 4px #ffffff',
+          textTransform: 'capitalize'
+        }}>
           {status}
         </span>
       );
@@ -113,27 +161,43 @@ export default function DataTable({
   });
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto">
-        <table className="min-w-full border border-gray-300">
-          <thead className="bg-gray-100 sticky top-0">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Table */}
+      <div style={{ 
+        flex: 1, 
+        overflow: 'auto', 
+        ...neumorph.inset,
+        padding: '4px'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+          <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="border px-4 py-2 cursor-pointer select-none hover:bg-gray-200"
                     onClick={header.column.getToggleSortingHandler()}
+                    style={{
+                      padding: '14px 16px',
+                      textAlign: 'left',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      color: '#4b5563',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                      cursor: 'pointer',
+                      backgroundColor: '#e8e0d5',
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1
+                    }}
                   >
-                    <div className="flex items-center justify-between">
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {{
-                        asc: ' ↑',
-                        desc: ' ↓',
-                      }[header.column.getIsSorted() as string] ?? null}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      <span style={{ color: '#a855f7' }}>
+                        {header.column.getIsSorted() === 'asc' && <ChevronUp size={14} />}
+                        {header.column.getIsSorted() === 'desc' && <ChevronDown size={14} />}
+                      </span>
                     </div>
                   </th>
                 ))}
@@ -141,52 +205,110 @@ export default function DataTable({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="border px-4 py-2">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+            {table.getRowModel().rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af' }}>
+                  No contracts found
+                </td>
               </tr>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row, idx) => (
+                <tr 
+                  key={row.id}
+                  style={{
+                    backgroundColor: idx % 2 === 0 ? '#ebe4d9' : '#e8e0d5',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3ece0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#ebe4d9' : '#e8e0d5'}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} style={{ padding: '12px 16px' }}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-4 mt-4 p-4 border-t">
-        <div className="flex items-center gap-2">
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        marginTop: '16px',
+        padding: '12px 0'
+      }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            style={{
+              ...neumorph.button,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '10px 16px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#374151',
+              opacity: !table.getCanPreviousPage() ? 0.5 : 1,
+            }}
           >
+            <ChevronLeft size={16} />
             Previous
           </button>
           <button
-            className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            style={{
+              ...neumorph.button,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '10px 16px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#374151',
+              opacity: !table.getCanNextPage() ? 0.5 : 1,
+            }}
           >
             Next
+            <ChevronRight size={16} />
           </button>
         </div>
-        <span className="text-sm text-gray-600">
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
-        </span>
-        <select
-          className="border rounded px-2 py-1"
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-        >
-          {[10, 20, 50, 100].map((size) => (
-            <option key={size} value={size}>
-              Show {size}
-            </option>
-          ))}
-        </select>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            Page <span style={{ fontWeight: 600, color: '#7c3aed' }}>{table.getState().pagination.pageIndex + 1}</span> of{' '}
+            <span style={{ fontWeight: 600 }}>{table.getPageCount() || 1}</span>
+          </span>
+          
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            style={{
+              ...neumorph.button,
+              padding: '10px 16px',
+              fontSize: '0.875rem',
+              color: '#374151',
+              appearance: 'none',
+              paddingRight: '32px',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+            }}
+          >
+            {[10, 20, 50, 100].map((size) => (
+              <option key={size} value={size}>
+                Show {size}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );
