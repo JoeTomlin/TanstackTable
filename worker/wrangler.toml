@@ -1,0 +1,17 @@
+name = "contract-ai-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# OpenAI API Key (add via: wrangler secret put OPENAI_API_KEY)
+# [vars]
+# Don't put secrets here! Use wrangler secret put
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "contracts_db"
+database_id = "f9f353c3-8152-4c7b-b0b8-bb85bb606d8a"
+
+# Development settings
+[dev]
+port = 8787

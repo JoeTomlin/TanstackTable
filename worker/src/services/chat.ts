@@ -8,7 +8,16 @@ export async function chat(args: {
 }): Promise<Response> {
   const { messages, tools, env } = args;
   
-  // Your existing chat implementation
+  // Convert tools to OpenAI format
+  const openAITools = tools.map(tool => ({
+    type: 'function' as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }));
+  
   const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -16,9 +25,9 @@ export async function chat(args: {
       Authorization: `Bearer ${env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages,
-      tools,
+      tools: openAITools,
       tool_choice: 'auto',
       stream: true,
     }),
