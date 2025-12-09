@@ -24,7 +24,11 @@ export default {
       // Chat endpoint - main AI interaction
       if (url.pathname === '/chat' && request.method === 'POST') {
         const body = await request.json();
-        const { messages } = body as { messages: Message[] };
+        const { messages, clientDate, clientDateReadable } = body as { 
+          messages: Message[];
+          clientDate?: string;
+          clientDateReadable?: string;
+        };
         
         if (!messages || !Array.isArray(messages)) {
           return new Response(
@@ -33,11 +37,13 @@ export default {
           );
         }
         
-        // Pass tools to chat function
+        // Pass tools and client's local date to chat function
         const response = await chat({
           messages,
           tools: tableTools,
-          env
+          env,
+          clientDate,
+          clientDateReadable
         });
         
         // Add CORS headers to streaming response

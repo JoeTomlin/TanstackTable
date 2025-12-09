@@ -19,6 +19,16 @@ export function useChat(onToolResult: (result: ToolResult) => void) {
     setIsLoading(true);
 
     try {
+      // Get client's local date for the AI
+      const now = new Date();
+      const clientDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const clientDateReadable = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,7 +36,9 @@ export function useChat(onToolResult: (result: ToolResult) => void) {
           messages: [...messages, userMessage].map(m => ({
             role: m.role,
             content: m.content
-          }))
+          })),
+          clientDate,
+          clientDateReadable
         })
       });
 

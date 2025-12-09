@@ -2,8 +2,12 @@ import type { Message, ToolDefinition, ToolCall } from '../types/messages';
 import type { Env } from '../types/env';
 import { executeToolCall } from '../tools/executor';
 
-// System prompt to minimize hallucination
-const SYSTEM_PROMPT = `You are a contract management assistant. You help users manage their contracts database.
+// Generate system prompt with current date (from client's local timezone)
+function getSystemPrompt(formattedDate: string, readableDate: string): string {
+  return `You are a contract management assistant. You help users manage their contracts database.
+
+CURRENT DATE: ${readableDate} (${formattedDate})
+Use this date when the user refers to "today", "now", "current date", etc.
 
 IMPORTANT RULES:
 1. ONLY use the tools provided to interact with contracts. Never make up contract data.
@@ -13,6 +17,7 @@ IMPORTANT RULES:
 5. Never claim an action was successful unless the tool result confirms success.
 6. If you're unsure about something, say so - don't guess.
 7. Keep responses concise and focused on the task.
+8. When creating contracts with relative dates like "today", "next month", "in 6 months", calculate the actual date using ${formattedDate} as today.
 
 Available actions:
 - View contracts: getContracts, getContractById, searchTable, filterTable
@@ -24,13 +29,26 @@ Available actions:
 
 Status values: active, pending, expired, cancelled
 Date format: YYYY-MM-DD`;
+}
 
 export async function chat(args: {
   messages: Message[];
   tools: ToolDefinition[];
   env: Env;
+  clientDate?: string;  // YYYY-MM-DD from client's local timezone
+  clientDateReadable?: string; // Human-readable date from client
 }): Promise<Response> {
-  const { messages, tools, env } = args;
+  const { messages, tools, env, clientDate, clientDateReadable } = args;
+  
+  // Use client's local date or fall back to UTC
+  const today = new Date();
+  const formattedDate = clientDate || today.toISOString().split('T')[0];
+  const readableDate = clientDateReadable || today.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
   
   // Convert tools to OpenAI format
   const openAITools = tools.map(tool => ({
@@ -42,9 +60,9 @@ export async function chat(args: {
     },
   }));
 
-  // Build conversation with system prompt
+  // Build conversation with system prompt (includes client's local date)
   let conversationMessages: Message[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: getSystemPrompt(formattedDate, readableDate) },
     ...messages
   ];
   let maxIterations = 5; // Prevent infinite loops
@@ -102,7 +120,7 @@ export async function chat(args: {
     // Execute tool calls
     conversationMessages.push({
       role: 'assistant',
-      content: assistantMessage.content,
+      content: assistantMessage.content || '',
       tool_calls: assistantMessage.tool_calls
     });
 
